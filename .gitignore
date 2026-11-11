@@ -1,0 +1,26 @@
+# Godot
+.godot/
+*.translation
+export_presets.cfg
+*.import
+
+# Builds
+build/
+*.apk
+*.aab
+*.ipa
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local secrets
+*.keystore
+*.jks
+local.properties
