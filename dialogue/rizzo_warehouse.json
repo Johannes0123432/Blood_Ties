@@ -1,0 +1,10 @@
+{
+  "id": "rizzo_warehouse",
+  "title": "Act III – Rizzo's Warehouse Final Showdown",
+  "lines": [
+    { "speaker": "RIZZO", "bg": "rizzo_warehouse", "text": "You signed with the feds, Moretti. Your family is done[cite: 41]." },
+    { "speaker": "JACKIE", "text": "My family is breathing. Yours won't be[cite: 41]." },
+    { "speaker": "SARAH", "text": "FBI! Drop it, Jackie[cite: 43]!" },
+    { "speaker": "NARRATOR", "text": "The warehouse burns into ash. Blood for blood[cite: 44, 46]." }
+  ]
+}
