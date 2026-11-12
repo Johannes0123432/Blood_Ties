@@ -3,93 +3,37 @@ name: Build Android APK
 on:
   push:
     branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
   workflow_dispatch:
 
-env:
-  GODOT_VERSION: 4.3.0
-  EXPORT_NAME: BloodTies
-
 jobs:
-  build:
-    name: Build APK
+  build-android:
+    name: Build Godot APK
     runs-on: ubuntu-latest
-
+    container:
+      image: barichello/godot-ci:4.3-stable
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Godot (standard, not mono)
-        uses: chickensoft-games/setup-godot@v2
-        with:
-          version: ${{ env.GODOT_VERSION }}
-          include-templates: true
-          # Force non-mono version
-          dotnet: false
-
-      - name: Create build folder
-        run: mkdir -p build
-
-      - name: Create proper export_presets.cfg
+      - name: Create Export Directories
         run: |
-          cat > export_presets.cfg << 'EOF'
-          [preset.0]
-          name="Android"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/BloodTies-debug.apk"
-          encryption_include_filters=""
-          encryption_exclude_filters=""
-          encrypt_pck=false
-          encrypt_directory=false
-          script_export_mode=2
+          mkdir -p build/android
 
-          [preset.0.options]
-          custom_template/debug=""
-          custom_template/release=""
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=false
-          architectures/arm64-v8a=true
-          architectures/x86=false
-          architectures/x86_64=false
-          version/code=1
-          version/name="1.0.0"
-          package/unique_name="com.sikoka.bloodties"
-          package/name="Blood Ties"
-          package/signed=true
-          package/classify_as_game=true
-          package/retain_data_on_uninstall=false
-          package/exclude_from_recents=false
-          launcher_icons/main_192x192=""
-          launcher_icons/adaptive_foreground_432x432=""
-          launcher_icons/adaptive_background_432x432=""
-          graphics/opengl_debug=false
-          xr_features/xr_mode=0
-          screen/immersive_mode=true
-          screen/support_small=true
-          screen/support_normal=true
-          screen/support_large=true
-          screen/support_xlarge=true
-          user_data_backup/allow=false
-          command_line/extra_args=""
-          apk_expansion/enable=false
-          permissions/internet=true
-          permissions/vibrate=true
-          EOF
-
-      - name: Export Android APK
+      - name: Download Android Export Templates
         run: |
-          godot --headless --path . --export-debug "Android" build/BloodTies-debug.apk
-          echo "=== Build folder contents ==="
-          ls -la build/
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable/
+          wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
+          unzip -q Godot_v4.3-stable_export_templates.tpz -d ~/.local/share/godot/export_templates/
+          mv ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Upload APK
+      - name: Build Debug APK
+        run: |
+          godot --headless --export-debug "Android" build/android/BloodTies-debug.apk
+
+      - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: BloodTies-debug-apk
-          path: build/*.apk
-          retention-days: 14
+          path: build/android/BloodTies-debug.apk
