@@ -19,6 +19,21 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      - name: Set up Android SDK & Build Tools
+        run: |
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          rm cmdline-tools.zip
+
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+
       - name: Download Godot 4.3 & Export Templates
         run: |
           # Download and install Godot Editor
@@ -50,6 +65,17 @@ jobs:
           # Inject passwords into export_presets.cfg automatically
           sed -i "s|YOUR_KEYSTORE_PASSWORD|$KEYSTORE_PASSWORD|g" export_presets.cfg
           sed -i "s|blood_ties_key|$KEYSTORE_ALIAS|g" export_presets.cfg
+
+      - name: Configure Godot Editor Settings for Android SDK & Tools
+        run: |
+          mkdir -p ~/.config/godot
+          cat <<EOF > ~/.config/godot/editor_settings-4.3.tres
+          [gd_resource type="EditorSettings" format=3]
+          [resource]
+          export/android/android_sdk_path = "$HOME/android-sdk"
+          export/android/apksigner_path = "$HOME/android-sdk/build-tools/34.0.0/apksigner"
+          export/android/adb_path = "$HOME/android-sdk/platform-tools/adb"
+          EOF
 
       - name: Build Signed Release APK
         run: |
