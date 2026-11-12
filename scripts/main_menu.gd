@@ -9,8 +9,7 @@ func _ready() -> void:
 	start_button.pressed.connect(_on_start)
 	continue_button.pressed.connect(_on_continue)
 	quit_button.pressed.connect(_on_quit)
-	
-	# Check for save
+		
 	if FileAccess.file_exists("user://bloodties_save.json"):
 		continue_button.disabled = false
 	else:
