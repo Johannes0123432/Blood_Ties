@@ -19,12 +19,26 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android Build-Tools & Platform
+      - name: Set up Android SDK & Build Tools Manually
         run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+          # Set up Android SDK directory environment variables
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          
+          # Download official command-line tools
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          rm cmdline-tools.zip
+
+          # Accept SDK licenses automatically
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+
+          # Install platform tools, build tools, and platform target for Godot
+          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Download Godot 4.3 & Export Templates
         run: |
@@ -51,7 +65,7 @@ jobs:
             -keypass "$KEYSTORE_PASSWORD" \
             -dname "CN=Johannes Sikoka, OU=Development, O=BloodTies, L=Rundu, C=NA"
 
-          # Ensure export_presets.cfg injects the exact secret values and Android SDK paths
+          # Inject passwords into export_presets.cfg if placeholders exist
           sed -i "s|YOUR_KEYSTORE_PASSWORD|$KEYSTORE_PASSWORD|g" export_presets.cfg
           sed -i "s|blood_ties_key|$KEYSTORE_ALIAS|g" export_presets.cfg
 
@@ -61,7 +75,7 @@ jobs:
           cat <<EOF > ~/.config/godot/editor_settings-4.3.tres
           [gd_resource type="EditorSettings" format=3]
           [resource]
-          export/android/android_sdk_path = "$ANDROID_HOME"
+          export/android/android_sdk_path = "$HOME/android-sdk"
           export/android/debug_keystore = ""
           export/android/debug_keystore_user = ""
           export/android/debug_keystore_pass = ""
