@@ -1,0 +1,9 @@
+{
+  "id": "interrogation",
+  "title": "Act III – FBI Interrogation",
+  "lines": [
+    { "speaker": "SARAH", "bg": "interrogation", "text": "Frankie's dead. Rizzo's taking over Philly. Testify, give us Rizzo, and your family stays safe[cite: 36, 37]." },
+    { "speaker": "JACKIE", "text": "Witness protection? In Philly? They'd find me in a week[cite: 36, 38, 39]." },
+    { "speaker": "SARAH", "text": "This is what you fight for. Your call[cite: 40]." }
+  ]
+}
