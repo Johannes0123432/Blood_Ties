@@ -2,97 +2,14 @@
   "id": "teaser",
   "title": "Blood Ties – Teaser",
   "lines": [
-    {
-      "speaker": "NARRATOR",
-      "text": "The moon hangs low over the Delaware River, a sickly yellow coin in a sky choked with industrial haze.",
-      "type": "narration"
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "The warehouse squats like a gutted beast. A dump truck backs into frame. Engine cuts. Silence slams down.",
-      "type": "narration"
-    },
-    {
-      "speaker": "JACKIE",
-      "text": "Family first, Vito. Always.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "VITO",
-      "text": "Always.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "Jackie pulls back the plastic. Sal 'The Rat' Marino. Single clean bullet hole in the forehead.",
-      "type": "narration"
-    },
-    {
-      "speaker": "JACKIE",
-      "text": "You talked too much, Sal. Too damn much.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "VITO",
-      "text": "He gave up the docks. The union books. Everything.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "JACKIE",
-      "text": "You ever think... maybe we're the rats?",
-      "type": "dialogue",
-      "choices": [
-        {
-          "id": "doubt",
-          "text": "Maybe we are the rats.",
-          "effects": { "family_trust": -5, "street_rep": -5 }
-        },
-        {
-          "id": "deny",
-          "text": "No. We do what we have to.",
-          "effects": { "street_rep": 5 }
-        },
-        {
-          "id": "silence",
-          "text": "(Say nothing. Just stare at the body.)",
-          "effects": {}
-        }
-      ]
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "Crack. A gunshot splits the night. Vito's chest explodes in red. He drops like a felled oak.",
-      "type": "narration"
-    },
-    {
-      "speaker": "JACKIE",
-      "text": "Vito... no...",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "Three masked men. Jackie returns fire. Two drop. The one with the red bandana flees.",
-      "type": "narration"
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "On the dead man's neck: a tattoo. Rizzo Crew.",
-      "type": "narration"
-    },
-    {
-      "speaker": "JACKIE",
-      "text": "You came to my house. My family.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "UNKNOWN",
-      "text": "You killed the wrong man, Jackie. Vito was just the beginning. We take everything.",
-      "type": "dialogue"
-    },
-    {
-      "speaker": "NARRATOR",
-      "text": "In Philly, family isn't blood. It's survival.",
-      "type": "narration"
-    }
+    { "speaker": "NARRATOR", "bg": "docks", "text": "The warehouse squats like a gutted beast by the Delaware River. Jackie and Vito drop Sal 'The Rat' Marino's body into the truck[cite: 3]." },
+    { "speaker": "JACKIE", "text": "Family first, Vito. Always." },
+    { "speaker": "VITO", "text": "Always." },
+    { "speaker": "JACKIE", "text": "You ever think... maybe we're the rats?", "choices": [
+      { "id": "doubt", "text": "Maybe we are the rats.", "effects": { "family_trust": -5, "street_rep": -5 } },
+      { "id": "deny", "text": "No. We do what we have to.", "effects": { "street_rep": 5 } },
+      { "id": "silence", "text": "(Say nothing.)", "effects": {} }
+    ]},
+    { "speaker": "NARRATOR", "text": "Crack. Gunfire splits the night. Vito's chest explodes. Masked men attack[cite: 4]." }
   ]
 }
