@@ -49,11 +49,12 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Generate Release Keystore & Configure Export Presets
+      - name: Generate Release Keystore & Export Preset
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
         run: |
+          # Generate production keystore
           keytool -genkey -v \
             -keystore blood-ties-release.keystore \
             -alias "$KEYSTORE_ALIAS" \
@@ -62,9 +63,33 @@ jobs:
             -keypass "$KEYSTORE_PASSWORD" \
             -dname "CN=Johannes Sikoka, OU=Development, O=BloodTies, L=Rundu, C=NA"
 
-          # Inject passwords into export_presets.cfg automatically
-          sed -i "s|YOUR_KEYSTORE_PASSWORD|$KEYSTORE_PASSWORD|g" export_presets.cfg
-          sed -i "s|blood_ties_key|$KEYSTORE_ALIAS|g" export_presets.cfg
+          # Write a fully valid Godot 4.3 export_presets.cfg on the fly
+          cat <<EOF > export_presets.cfg
+          [preset.0]
+          name="Android"
+          platform="Android"
+          runnable=true
+          dedicated_server=false
+          custom_features=""
+          export_filter="all_resources"
+          include_filter=""
+          exclude_filter=""
+          export_path="build/android/BloodTies-release.apk"
+          patch_export_binaries=0
+          script_export_mode=1
+          script_encryption_key=""
+
+          [preset.0.options]
+          custom_build/use_custom_build=false
+          architectures/armeabi-v7a=true
+          architectures/arm64-v8a=true
+          application/id="com.johannessikoka.bloodties"
+          application/name="Blood Ties"
+          package/signed=true
+          keystore/release="res://blood-ties-release.keystore"
+          keystore/release_user="$KEYSTORE_ALIAS"
+          keystore/release_password="$KEYSTORE_PASSWORD"
+          EOF
 
       - name: Configure Godot Editor Settings for Android SDK & Tools
         run: |
