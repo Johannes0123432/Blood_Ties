@@ -1,0 +1,10 @@
+{
+  "id": "basement",
+  "title": "Act II – The Basement Interrogation",
+  "lines": [
+    { "speaker": "NARRATOR", "bg": "rizzo_warehouse", "text": "Nick 'The Nickel' is zip-tied to a chair in Sal's old concrete crypt[cite: 22, 23]." },
+    { "speaker": "NICK", "text": "Your brother called us at 2:14 AM. Frankie sold you out for a stack of hundreds[cite: 23]." },
+    { "speaker": "FRANKIE", "text": "I did it for the kids! Luca owes the Russians! Gina needs medical treatments[cite: 24]!" },
+    { "speaker": "JACKIE", "text": "You sold our brother[cite: 25]." }
+  ]
+}
