@@ -1,0 +1,12 @@
+{
+  "id": "family_home",
+  "title": "Act I – Family Kitchen",
+  "lines": [
+    { "speaker": "NARRATOR", "bg": "kitchen", "text": "The kitchen smells of garlic and simmering gravy[cite: 9]." },
+    { "speaker": "MARIA", "text": "Sit down, Luca. Your father's late[cite: 9, 10]." },
+    { "speaker": "LUCA", "text": "He's always late. Or dead. Pick one[cite: 10]." },
+    { "speaker": "MARIA", "text": "We don't say that. Family first[cite: 10]." },
+    { "speaker": "JACKIE", "text": "Morning[cite: 12]." },
+    { "speaker": "MARIA", "text": "You're late[cite: 12]." }
+  ]
+}
