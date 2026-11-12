@@ -16,7 +16,6 @@ func load_dialogue(path: String) -> void:
 			current_dialogue = json["lines"]
 			current_index = 0
 			is_active = true
-			print("Dialogue loaded: ", path)
 		else:
 			push_error("Invalid dialogue format: " + path)
 	else:
@@ -43,14 +42,10 @@ func has_choices() -> bool:
 
 func make_choice(choice_id: String) -> void:
 	choice_made.emit(choice_id)
-	# Jump to the next node if specified
 	var line = get_current_line()
 	if line.has("choices"):
 		for c in line["choices"]:
 			if c.get("id") == choice_id:
-				if c.has("goto"):
-					# Simple linear for now – can expand to node-based
-					pass
 				if c.has("effects"):
 					_apply_effects(c["effects"])
 				break
