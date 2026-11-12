@@ -1,21 +1,35 @@
-name: Build Android APK
+name: Build Signed Release APK
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
   workflow_dispatch:
 
 jobs:
-  build-android:
-    name: Build Godot APK
+  build-release-apk:
+    name: Build Godot Release APK
     runs-on: ubuntu-latest
     container:
       image: barichello/godot-ci:4.3-stable
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Generate Release Keystore Dynamically
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
+        run: |
+          # Generate the production keystore on the fly inside the runner workspace
+          keytool -genkey -v \
+            -keystore blood-ties-release.keystore \
+            -alias "$KEYSTORE_ALIAS" \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass "$KEYSTORE_PASSWORD" \
+            -keypass "$KEYSTORE_PASSWORD" \
+            -dname "CN=Johannes Sikoka, OU=Development, O=BloodTies, L=Rundu, C=NA"
+          
+          echo "Keystore generated successfully."
 
       - name: Create Export Directories
         run: |
@@ -28,12 +42,12 @@ jobs:
           unzip -q Godot_v4.3-stable_export_templates.tpz -d ~/.local/share/godot/export_templates/
           mv ~/.local/share/godot/export_templates/templates/* ~/.local/share/godot/export_templates/4.3.stable/
 
-      - name: Build Debug APK
+      - name: Build Signed Release APK
         run: |
-          godot --headless --export-debug "Android" build/android/BloodTies-debug.apk
+          godot --headless --export-release "Android" build/android/BloodTies-release.apk
 
-      - name: Upload APK Artifact
+      - name: Upload Signed APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BloodTies-debug-apk
-          path: build/android/BloodTies-debug.apk
+          name: BloodTies-release-apk
+          path: build/android/BloodTies-release.apk
