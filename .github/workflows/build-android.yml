@@ -13,26 +13,11 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17 (for keytool & apksigner)
+      - name: Set up JDK 17 (for keytool)
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
-
-      - name: Set up Android SDK & Build Tools Manually
-        run: |
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip
-          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          rm cmdline-tools.zip
-
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Download Godot 4.3 & Export Templates
         run: |
@@ -42,7 +27,7 @@ jobs:
           mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
           chmod +x /usr/local/bin/godot
 
-          # Download and properly install Export Templates for Godot 4.3
+          # Download and install Export Templates for Godot 4.3
           mkdir -p ~/.local/share/godot/export_templates/4.3.stable/
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           unzip -q Godot_v4.3-stable_export_templates.tpz
@@ -62,21 +47,9 @@ jobs:
             -keypass "$KEYSTORE_PASSWORD" \
             -dname "CN=Johannes Sikoka, OU=Development, O=BloodTies, L=Rundu, C=NA"
 
-          # Inject passwords into export_presets.cfg
+          # Inject passwords into export_presets.cfg automatically
           sed -i "s|YOUR_KEYSTORE_PASSWORD|$KEYSTORE_PASSWORD|g" export_presets.cfg
           sed -i "s|blood_ties_key|$KEYSTORE_ALIAS|g" export_presets.cfg
-
-      - name: Configure Godot Editor Settings for Android SDK
-        run: |
-          mkdir -p ~/.config/godot
-          cat <<EOF > ~/.config/godot/editor_settings-4.3.tres
-          [gd_resource type="EditorSettings" format=3]
-          [resource]
-          export/android/android_sdk_path = "$HOME/android-sdk"
-          export/android/debug_keystore = ""
-          export/android/debug_keystore_user = ""
-          export/android/debug_keystore_pass = ""
-          EOF
 
       - name: Build Signed Release APK
         run: |
