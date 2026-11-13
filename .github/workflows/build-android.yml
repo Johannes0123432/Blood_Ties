@@ -1,4 +1,4 @@
-name: Build Signed Release APK
+name: Build Android APK
 
 on:
   push:
@@ -6,24 +6,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-release-apk:
-    name: Build Godot Release APK
+  build:
+    name: Build APK
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17 (for keytool)
+      - name: Setup Java
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
 
-      - name: Set up Android SDK & Build Tools
+      - name: Setup Android SDK
         run: |
           echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
           echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
           echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
+          echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
 
           mkdir -p $HOME/android-sdk/cmdline-tools
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
@@ -31,84 +33,46 @@ jobs:
           mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
           rm cmdline-tools.zip
 
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null
           $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
-      - name: Download Godot 4.3 & Export Templates
+      - name: Setup Godot 4.3
         run: |
-          # Download and install Godot Editor
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_linux.x86_64.zip
           unzip -q Godot_v4.3-stable_linux.x86_64.zip
           mv Godot_v4.3-stable_linux.x86_64 /usr/local/bin/godot
           chmod +x /usr/local/bin/godot
 
-          # Download and install Export Templates for Godot 4.3
-          mkdir -p ~/.local/share/godot/export_templates/4.3.stable/
+          mkdir -p ~/.local/share/godot/export_templates/4.3.stable
           wget -q https://github.com/godotengine/godot/releases/download/4.3-stable/Godot_v4.3-stable_export_templates.tpz
           unzip -q Godot_v4.3-stable_export_templates.tpz
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
-          rm -rf templates
+          rm -rf templates Godot_v4.3-stable_export_templates.tpz
 
-      - name: Generate Release Keystore & Export Preset
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEYSTORE_ALIAS: ${{ secrets.KEYSTORE_ALIAS }}
-        run: |
-          # Generate production keystore
-          keytool -genkey -v \
-            -keystore blood-ties-release.keystore \
-            -alias "$KEYSTORE_ALIAS" \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -storepass "$KEYSTORE_PASSWORD" \
-            -keypass "$KEYSTORE_PASSWORD" \
-            -dname "CN=Johannes Sikoka, OU=Development, O=BloodTies, L=Rundu, C=NA"
-
-          # Write a fully valid Godot 4.3 export_presets.cfg on the fly
-          cat <<EOF > export_presets.cfg
-          [preset.0]
-          name="Android"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/android/BloodTies-release.apk"
-          patch_export_binaries=0
-          script_export_mode=1
-          script_encryption_key=""
-
-          [preset.0.options]
-          custom_build/use_custom_build=false
-          architectures/armeabi-v7a=true
-          architectures/arm64-v8a=true
-          application/id="com.johannessikoka.bloodties"
-          application/name="Blood Ties"
-          package/signed=true
-          keystore/release="res://blood-ties-release.keystore"
-          keystore/release_user="$KEYSTORE_ALIAS"
-          keystore/release_password="$KEYSTORE_PASSWORD"
-          EOF
-
-      - name: Configure Godot Editor Settings for Android SDK & Tools
+      - name: Configure Godot Editor Settings
         run: |
           mkdir -p ~/.config/godot
-          cat <<EOF > ~/.config/godot/editor_settings-4.3.tres
+          cat > ~/.config/godot/editor_settings-4.3.tres << EOF
           [gd_resource type="EditorSettings" format=3]
+
           [resource]
           export/android/android_sdk_path = "$HOME/android-sdk"
-          export/android/apksigner_path = "$HOME/android-sdk/build-tools/34.0.0/apksigner"
-          export/android/adb_path = "$HOME/android-sdk/platform-tools/adb"
+          export/android/debug_keystore = ""
+          export/android/debug_keystore_user = ""
+          export/android/debug_keystore_pass = ""
           EOF
 
-      - name: Build Signed Release APK
-        run: |
-          mkdir -p build/android
-          godot --headless --export-release "Android" build/android/BloodTies-release.apk
+      - name: Create build folder
+        run: mkdir -p build
 
-      - name: Upload Signed APK Artifact
+      - name: Export Debug APK
+        run: |
+          godot --headless --path . --export-debug "Android" build/BloodTies-debug.apk
+          ls -la build/
+
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: BloodTies-release-apk
-          path: build/android/BloodTies-release.apk
+          name: BloodTies-debug-apk
+          path: build/*.apk
+          retention-days: 14
