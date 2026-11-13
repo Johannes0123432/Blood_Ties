@@ -49,61 +49,71 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Force clean project name and create export preset
+      - name: Create Keystore & Export Preset
         run: |
           if [ -f project.godot ]; then
             sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
           fi
 
-          cat > export_presets.cfg << 'EOF'
-          [preset.0]
-          name="Android"
-          platform="Android"
-          runnable=true
-          dedicated_server=false
-          custom_features=""
-          export_filter="all_resources"
-          include_filter=""
-          exclude_filter=""
-          export_path="build/BloodTies.apk"
-          encryption_include_filters=""
-          encryption_exclude_filters=""
-          encrypt_pck=false
-          encrypt_directory=false
-          script_export_mode=2
+          # Generate a local debug/release keystore so Godot signing validation passes
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -alias androiddebugkey \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass android -keypass android \
+            -dname "CN=Android Debug,O=Android,C=US"
 
-          [preset.0.options]
-          custom_template/debug=""
-          custom_template/release=""
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=false
-          architectures/arm64-v8a=true
-          architectures/x86=false
-          architectures/x86_64=false
-          version/code=1
-          version/name="1.0.0"
-          package/unique_name="com.sikoka.bloodties"
-          package/name="BloodTies"
-          package/signed=true
-          package/classify_as_game=true
-          package/retain_data_on_uninstall=false
-          package/exclude_from_recents=false
-          launcher_icons/main_192x192=""
-          launcher_icons/adaptive_foreground_432x432=""
-          launcher_icons/adaptive_background_432x432=""
-          graphics/opengl_debug=false
-          xr_features/xr_mode=0
-          screen/immersive_mode=true
-          screen/support_small=true
-          screen/support_normal=true
-          screen/support_large=true
-          screen/support_xlarge=true
-          user_data_backup/allow=false
-          command_line/extra_args=""
-          apk_expansion/enable=false
-          permissions/internet=true
-          permissions/vibrate=true
-          EOF
+          cat << 'EOF' > export_presets.cfg
+[preset.0]
+name="Android"
+platform="Android"
+runnable=true
+dedicated_server=false
+custom_features=""
+export_filter="all_resources"
+include_filter=""
+exclude_filter=""
+export_path="build/BloodTies-debug.apk"
+encryption_include_filters=""
+encryption_exclude_filters=""
+encrypt_pck=false
+encrypt_directory=false
+script_export_mode=2
+
+[preset.0.options]
+custom_template/debug=""
+custom_template/release=""
+gradle_build/use_gradle_build=false
+architectures/armeabi-v7a=false
+architectures/arm64-v8a=true
+architectures/x86=false
+architectures/x86_64=false
+version/code=1
+version/name="1.0.0"
+package/unique_name="com.sikoka.bloodties"
+package/name="BloodTies"
+package/signed=true
+keystore/debug="res://debug.keystore"
+keystore/debug_user="androiddebugkey"
+keystore/debug_password="android"
+package/classify_as_game=true
+package/retain_data_on_uninstall=false
+package/exclude_from_recents=false
+launcher_icons/main_192x192=""
+launcher_icons/adaptive_foreground_432x432=""
+launcher_icons/adaptive_background_432x432=""
+graphics/opengl_debug=false
+xr_features/xr_mode=0
+screen/immersive_mode=true
+screen/support_small=true
+screen/support_normal=true
+screen/support_large=true
+screen/support_xlarge=true
+user_data_backup/allow=false
+command_line/extra_args=""
+apk_expansion/enable=false
+permissions/permissions=PackedStringArray("ACCESS_NETWORK_STATE", "INTERNET", "VIBRATE")
+EOF
 
           echo "=== export_presets.cfg ==="
           cat export_presets.cfg
@@ -111,20 +121,20 @@ jobs:
       - name: Configure Godot Editor Settings
         run: |
           mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.3.tres << 'EOF'
-          [gd_resource type="EditorSettings" format=3]
+          cat << 'EOF' > ~/.config/godot/editor_settings-4.3.tres
+[gd_resource type="EditorSettings" format=3]
 
-          [resource]
-          export/android/android_sdk_path="$HOME/android-sdk"
-          export/android/debug_keystore=""
-          export/android/debug_keystore_user=""
-          export/android/debug_keystore_pass=""
-          EOF
+[resource]
+export/android/android_sdk_path="$HOME/android-sdk"
+export/android/debug_keystore="res://debug.keystore"
+export/android/debug_keystore_user="androiddebugkey"
+export/android/debug_keystore_pass="android"
+EOF
 
       - name: Export Debug APK
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/BloodTies-debug.apk || true
+          godot --path . --verbose --headless --export-debug "Android" build/BloodTies-debug.apk
           echo "=== Build folder ==="
           ls -la build/ || true
 
@@ -134,4 +144,4 @@ jobs:
           name: BloodTies-debug-apk
           path: build/*.apk
           retention-days: 14
-          if-no-files-found: warn
+          if-no-files-found: error
