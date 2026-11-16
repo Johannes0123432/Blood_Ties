@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Windows
 
 on:
   push:
@@ -7,34 +7,12 @@ on:
 
 jobs:
   build:
-    name: Build APK
+    name: Build Windows
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 17
-
-      - name: Setup Android SDK
-        run: |
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools/34.0.0" >> $GITHUB_PATH
-
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip
-          mv cmdline-tools $HOME/android-sdk/cmdline-tools/latest
-          rm cmdline-tools.zip
-
-          yes | $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null || true
-          $HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
 
       - name: Setup Godot 4.3
         run: |
@@ -49,32 +27,21 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Prepare project
+      - name: Create Windows export preset
         run: |
-          # Clean project name
           sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
 
-          # Create debug keystore
-          keytool -genkey -v \
-            -keystore debug.keystore \
-            -storepass android \
-            -alias androiddebugkey \
-            -keypass android \
-            -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
-
-          # Minimal clean export preset
           cat > export_presets.cfg << 'EOF'
           [preset.0]
-          name="Android"
-          platform="Android"
+          name="Windows Desktop"
+          platform="Windows Desktop"
           runnable=true
           dedicated_server=false
           custom_features=""
           export_filter="all_resources"
           include_filter=""
           exclude_filter=""
-          export_path="build/BloodTies.apk"
+          export_path="build/BloodTies.exe"
           encryption_include_filters=""
           encryption_exclude_filters=""
           encrypt_pck=false
@@ -84,62 +51,36 @@ jobs:
           [preset.0.options]
           custom_template/debug=""
           custom_template/release=""
-          gradle_build/use_gradle_build=false
-          architectures/armeabi-v7a=false
-          architectures/arm64-v8a=true
-          architectures/x86=false
-          architectures/x86_64=false
-          version/code=1
-          version/name="1.0"
-          package/unique_name="com.sikoka.bloodties"
-          package/name="BloodTies"
-          package/signed=true
-          package/classify_as_game=true
-          package/retain_data_on_uninstall=false
-          package/exclude_from_recents=false
-          graphics/opengl_debug=false
-          xr_features/xr_mode=0
-          screen/immersive_mode=true
-          screen/support_small=true
-          screen/support_normal=true
-          screen/support_large=true
-          screen/support_xlarge=true
-          user_data_backup/allow=false
-          command_line/extra_args=""
-          apk_expansion/enable=false
-          permissions/internet=true
+          debug/export_console_wrapper=1
+          binary_format/embed_pck=false
+          texture_format/s3tc_bptc=true
+          texture_format/etc2_astc=false
+          binary_format/architecture="x86_64"
+          codesign/enable=false
+          application/modify_resources=true
+          application/icon=""
+          application/console_wrapper_icon=""
+          application/icon_interpolation=4
+          application/file_version="1.0.0"
+          application/product_version="1.0.0"
+          application/company_name="Johannes Sikoka"
+          application/product_name="Blood Ties"
+          application/file_description="Blood Ties"
+          application/copyright=""
+          application/trademarks=""
+          application/export_angle=0
+          ssh_remote_deploy/enabled=false
           EOF
 
-          echo "=== project.godot ==="
-          cat project.godot
-          echo "=== export_presets.cfg ==="
-          cat export_presets.cfg
-
-      - name: Configure Godot Editor Settings
-        run: |
-          mkdir -p ~/.config/godot
-          cat > ~/.config/godot/editor_settings-4.3.tres << EOF
-          [gd_resource type="EditorSettings" format=3]
-
-          [resource]
-          export/android/android_sdk_path="$HOME/android-sdk"
-          export/android/debug_keystore="$(pwd)/debug.keystore"
-          export/android/debug_keystore_user="androiddebugkey"
-          export/android/debug_keystore_pass="android"
-          EOF
-
-      - name: Try Export with Verbose
+      - name: Export Windows
         run: |
           mkdir -p build
-          godot --headless --verbose --path . --export-debug "Android" build/BloodTies-debug.apk 2>&1 | tee export.log
-          echo "=== Last 50 lines of log ==="
-          tail -50 export.log
-          echo "=== Build folder ==="
-          ls -la build/ || true
+          godot --headless --path . --export-release "Windows Desktop" build/BloodTies.exe
+          ls -la build/
 
-      - name: Upload logs if failed
-        if: failure()
+      - name: Upload Windows Build
         uses: actions/upload-artifact@v4
         with:
-          name: export-log
-          path: export.log
+          name: BloodTies-Windows
+          path: build/**
+          retention-days: 14
