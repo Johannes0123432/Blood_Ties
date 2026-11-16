@@ -49,9 +49,12 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Create debug keystore + clean project
+      - name: Prepare project
         run: |
-          # Create a debug keystore
+          # Clean project name
+          sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
+
+          # Create debug keystore
           keytool -genkey -v \
             -keystore debug.keystore \
             -storepass android \
@@ -60,11 +63,7 @@ jobs:
             -keyalg RSA -keysize 2048 -validity 10000 \
             -dname "CN=Android Debug,O=Android,C=US"
 
-          # Force clean project name (remove space)
-          sed -i 's/config\/name="Blood Ties"/config\/name="BloodTies"/' project.godot
-          sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
-
-          # Create clean export preset
+          # Minimal clean export preset
           cat > export_presets.cfg << 'EOF'
           [preset.0]
           name="Android"
@@ -91,16 +90,13 @@ jobs:
           architectures/x86=false
           architectures/x86_64=false
           version/code=1
-          version/name="1.0.0"
+          version/name="1.0"
           package/unique_name="com.sikoka.bloodties"
           package/name="BloodTies"
           package/signed=true
           package/classify_as_game=true
           package/retain_data_on_uninstall=false
           package/exclude_from_recents=false
-          launcher_icons/main_192x192=""
-          launcher_icons/adaptive_foreground_432x432=""
-          launcher_icons/adaptive_background_432x432=""
           graphics/opengl_debug=false
           xr_features/xr_mode=0
           screen/immersive_mode=true
@@ -112,8 +108,12 @@ jobs:
           command_line/extra_args=""
           apk_expansion/enable=false
           permissions/internet=true
-          permissions/vibrate=true
           EOF
+
+          echo "=== project.godot ==="
+          cat project.godot
+          echo "=== export_presets.cfg ==="
+          cat export_presets.cfg
 
       - name: Configure Godot Editor Settings
         run: |
@@ -128,20 +128,18 @@ jobs:
           export/android/debug_keystore_pass="android"
           EOF
 
-          echo "=== Editor Settings ==="
-          cat ~/.config/godot/editor_settings-4.3.tres
-
-      - name: Export Debug APK
+      - name: Try Export with Verbose
         run: |
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/BloodTies-debug.apk
+          godot --headless --verbose --path . --export-debug "Android" build/BloodTies-debug.apk 2>&1 | tee export.log
+          echo "=== Last 50 lines of log ==="
+          tail -50 export.log
           echo "=== Build folder ==="
-          ls -la build/
+          ls -la build/ || true
 
-      - name: Upload APK
+      - name: Upload logs if failed
+        if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: BloodTies-debug-apk
-          path: build/*.apk
-          retention-days: 14
-          if-no-files-found: error
+          name: export-log
+          path: export.log
