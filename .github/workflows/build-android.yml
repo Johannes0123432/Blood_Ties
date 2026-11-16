@@ -49,12 +49,22 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Force clean project name and create export preset
+      - name: Create debug keystore + clean project
         run: |
-          if [ -f project.godot ]; then
-            sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
-          fi
+          # Create a debug keystore
+          keytool -genkey -v \
+            -keystore debug.keystore \
+            -storepass android \
+            -alias androiddebugkey \
+            -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
 
+          # Force clean project name (remove space)
+          sed -i 's/config\/name="Blood Ties"/config\/name="BloodTies"/' project.godot
+          sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
+
+          # Create clean export preset
           cat > export_presets.cfg << 'EOF'
           [preset.0]
           name="Android"
@@ -108,15 +118,14 @@ jobs:
       - name: Configure Godot Editor Settings
         run: |
           mkdir -p ~/.config/godot
-          # Important: use double quotes so $HOME is expanded
           cat > ~/.config/godot/editor_settings-4.3.tres << EOF
           [gd_resource type="EditorSettings" format=3]
 
           [resource]
           export/android/android_sdk_path="$HOME/android-sdk"
-          export/android/debug_keystore=""
-          export/android/debug_keystore_user=""
-          export/android/debug_keystore_pass=""
+          export/android/debug_keystore="$(pwd)/debug.keystore"
+          export/android/debug_keystore_user="androiddebugkey"
+          export/android/debug_keystore_pass="android"
           EOF
 
           echo "=== Editor Settings ==="
