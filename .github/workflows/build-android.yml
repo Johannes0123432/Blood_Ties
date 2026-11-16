@@ -27,9 +27,11 @@ jobs:
           mv templates/* ~/.local/share/godot/export_templates/4.3.stable/
           rm -rf templates
 
-      - name: Create Windows export preset
+      - name: Prepare project
         run: |
+          # Force correct settings
           sed -i 's/config\/name=.*/config\/name="BloodTies"/' project.godot
+          sed -i 's/renderer\/rendering_method=.*/renderer\/rendering_method="gl_compatibility"/' project.godot
 
           cat > export_presets.cfg << 'EOF'
           [preset.0]
@@ -52,7 +54,7 @@ jobs:
           custom_template/debug=""
           custom_template/release=""
           debug/export_console_wrapper=1
-          binary_format/embed_pck=false
+          binary_format/embed_pck=true
           texture_format/s3tc_bptc=true
           texture_format/etc2_astc=false
           binary_format/architecture="x86_64"
@@ -84,3 +86,4 @@ jobs:
           name: BloodTies-Windows
           path: build/**
           retention-days: 14
+          if-no-files-found: error
